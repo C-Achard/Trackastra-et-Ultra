@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-<img src="res/logo/logo_dark_w_bg.png" style="width:25%;"/>
+<img src="res/logo/logo_dark_w_bg.png" style="width:45%;"/>
 </p>
 
 
@@ -33,7 +33,7 @@ pip install trackastra[pretrained_feats]
 For standalone installation:
 
 ```bash
-pip install git+TODO: add repo URL
+pip install git+https://github.com/C-Achard/Trackastra-et-Ultra.git
 ```
 
 ## Reference

@@ -12,6 +12,7 @@ from trackastra.utils.utils import percentile_norm
 
 class BaseAugmentation(ABC):
     """Base class for windowed region augmentations."""
+
     def __init__(self, p: float = 0.5, rng_seed=None):
         self._p = p
         self._rng = np.random.RandomState(rng_seed)
@@ -30,14 +31,16 @@ class BaseAugmentation(ABC):
 
 
 class FlipAugment(BaseAugmentation):
-    def __init__(self, p_horizontal: float = 0.5, p_vertical: float = 0.5, rng_seed=None):
+    def __init__(
+        self, p_horizontal: float = 0.5, p_vertical: float = 0.5, rng_seed=None
+    ):
         super().__init__(p=None, rng_seed=rng_seed)
         self._p_horizontal = p_horizontal
         self._p_vertical = p_vertical
         self.signature = {
             "FlipAugment": {
                 "horizontal": self._p_horizontal,
-                "vertical": self._p_vertical
+                "vertical": self._p_vertical,
             }
         }
 
@@ -61,7 +64,6 @@ class FlipAugment(BaseAugmentation):
 
 
 class RotAugment(BaseAugmentation):
-
     def __init__(self, p: float = 0.5, degrees: int = 15, rng_seed=None):
         super().__init__(p, rng_seed=rng_seed)
         self.degrees = degrees
@@ -79,7 +81,6 @@ class RotAugment(BaseAugmentation):
 
 
 class Rot90Augment(BaseAugmentation):
-
     def __init__(self, p=0.5, rng_seed=None):
         super().__init__(p, rng_seed=rng_seed)
         self.signature = {
@@ -103,15 +104,16 @@ class Rot90Augment(BaseAugmentation):
 
 
 class BrightnessJitter(BaseAugmentation):
-
-    def __init__(self, bright_shift: float = 0.5, contrast_shift: float = 0.5, rng_seed=None):
+    def __init__(
+        self, bright_shift: float = 0.5, contrast_shift: float = 0.5, rng_seed=None
+    ):
         super().__init__(p=None, rng_seed=rng_seed)
         self._b_shift = bright_shift
         self._c_shift = contrast_shift
         self.signature = {
             "BrightnessJitter": {
                 "brightness_shift": self._b_shift,
-                "contrast_shift": self._c_shift
+                "contrast_shift": self._c_shift,
             }
         }
 
@@ -134,12 +136,7 @@ class AddGaussianNoise(BaseAugmentation):
         super().__init__(p=None, rng_seed=rng_seed)
         self.mean = mean
         self.sigma = std
-        self.signature = {
-            "AddGaussianNoise": {
-                "mean": self.mean,
-                "std": self.sigma
-            }
-        }
+        self.signature = {"AddGaussianNoise": {"mean": self.mean, "std": self.sigma}}
 
     def _get_aug(self):
         # sample random mean/std
@@ -153,15 +150,14 @@ class AddGaussianNoise(BaseAugmentation):
 
 
 class GaussianBlur(BaseAugmentation):
-    def __init__(self, kernel_size: int = 3, sigma: tuple[float] = (0.01, 1.0), rng_seed=None):
+    def __init__(
+        self, kernel_size: int = 3, sigma: tuple[float] = (0.01, 1.0), rng_seed=None
+    ):
         super().__init__(p=None, rng_seed=rng_seed)
         self.kernel_size = kernel_size
         self.sigma = sigma
         self.signature = {
-            "GaussianBlur": {
-                "kernel_size": self.kernel_size,
-                "sigma": self.sigma
-            }
+            "GaussianBlur": {"kernel_size": self.kernel_size, "sigma": self.sigma}
         }
 
     def _get_aug(self):
@@ -175,7 +171,13 @@ class GaussianBlur(BaseAugmentation):
 
 
 class RandomAffine(BaseAugmentation):
-    def __init__(self, degrees: float = 0.0, translate: tuple[float, float] = (0.0, 0.0), scale: tuple[float, float] = (1.0, 1.0), rng_seed=None):
+    def __init__(
+        self,
+        degrees: float = 0.0,
+        translate: tuple[float, float] = (0.0, 0.0),
+        scale: tuple[float, float] = (1.0, 1.0),
+        rng_seed=None,
+    ):
         super().__init__(p=None, rng_seed=rng_seed)
         self.degrees = degrees
         self.translate = translate
@@ -184,12 +186,14 @@ class RandomAffine(BaseAugmentation):
             "RandomAffine": {
                 "degrees": self.degrees,
                 "translate": self.translate,
-                "scale": self.scale
+                "scale": self.scale,
             }
         }
 
     def _get_aug(self):
-        return transforms.RandomAffine(degrees=self.degrees, translate=self.translate, scale=self.scale)
+        return transforms.RandomAffine(
+            degrees=self.degrees, translate=self.translate, scale=self.scale
+        )
 
     def __call__(self, images: torch.Tensor, masks: tv_tensors.Mask):
         aug = self._get_aug()
@@ -203,11 +207,7 @@ class ElasticTransform(BaseAugmentation):
         self.alpha = alpha
         self.sigma = sigma
         self.signature = {
-            "ElasticTransform": {
-                "p": self._p,
-                "alpha": self.alpha,
-                "sigma": self.sigma
-            }
+            "ElasticTransform": {"p": self._p, "alpha": self.alpha, "sigma": self.sigma}
         }
 
     def _get_aug(self):
@@ -218,7 +218,14 @@ class ElasticTransform(BaseAugmentation):
 
 
 class RandomScale(BaseAugmentation):
-    def __init__(self, p: float = 0.9, max_scale: float = 1.0, min_scale=0.8, preserve_size=False, rng_seed=None):
+    def __init__(
+        self,
+        p: float = 0.9,
+        max_scale: float = 1.0,
+        min_scale=0.8,
+        preserve_size=False,
+        rng_seed=None,
+    ):
         super().__init__(p=p, rng_seed=rng_seed)
         self.min_scale = min_scale
         self.max_scale = max_scale
@@ -228,7 +235,7 @@ class RandomScale(BaseAugmentation):
                 "p": self._p,
                 "min_scale": self.min_scale,
                 "max_scale": self.max_scale,
-                "preserve_size": self.preserve_size
+                "preserve_size": self.preserve_size,
             }
         }
 
@@ -244,13 +251,22 @@ class RandomScale(BaseAugmentation):
             new_h, new_w = int(orig_h * scale), int(orig_w * scale)
 
             # Resize images and masks
-            images_scaled = F.interpolate(images, size=(new_h, new_w), mode="bilinear", align_corners=False)
-            masks_scaled = F.interpolate(masks.float(), size=(new_h, new_w), mode="nearest").long()
+            images_scaled = F.interpolate(
+                images, size=(new_h, new_w), mode="bilinear", align_corners=False
+            )
+            masks_scaled = F.interpolate(
+                masks.float(), size=(new_h, new_w), mode="nearest"
+            ).long()
 
             if self.preserve_size:
                 pad_h = max(orig_h - new_h, 0)
                 pad_w = max(orig_w - new_w, 0)
-                pad = [pad_w // 2, pad_w - pad_w // 2, pad_h // 2, pad_h - pad_h // 2]  # left, right, top, bottom
+                pad = [
+                    pad_w // 2,
+                    pad_w - pad_w // 2,
+                    pad_h // 2,
+                    pad_h - pad_h // 2,
+                ]  # left, right, top, bottom
 
                 images_scaled = F.pad(images_scaled, pad, mode="constant", value=0)
                 masks_scaled = F.pad(masks_scaled, pad, mode="constant", value=0)
@@ -265,13 +281,10 @@ class RandomScale(BaseAugmentation):
 
 class IdentityAugment(BaseAugmentation):
     """Identity augmentation for debugging purposes."""
+
     def __init__(self, p: float = 1.0, rng_seed=None):
         super().__init__(p=p, rng_seed=rng_seed)
-        self.signature = {
-            "IdentityAugment": {
-                "p": self._p
-            }
-        }
+        self.signature = {"IdentityAugment": {"p": self._p}}
 
     def _get_aug(self):
         self.applied_record["identity"] = True
@@ -283,6 +296,7 @@ class IdentityAugment(BaseAugmentation):
 
 class PretrainedAugmentations:
     """Augmentation pipeline to get augmented copies of model embeddings."""
+
     default_normalize = percentile_norm
 
     def __init__(self, rng_seed=None, normalize=True, shuffle=True):
@@ -305,7 +319,9 @@ class PretrainedAugmentations:
         self.image_shape = None
         self.shuffle = shuffle
 
-    def __call__(self, images: torch.Tensor, masks: tv_tensors.Mask, normalize_func=None) -> tuple[torch.Tensor, tv_tensors.Mask, dict]:
+    def __call__(
+        self, images: torch.Tensor, masks: tv_tensors.Mask, normalize_func=None
+    ) -> tuple[torch.Tensor, tv_tensors.Mask, dict]:
         """Applies the augmentations to the images."""
         images, masks = self.preprocess(images, masks, normalize_func=normalize_func)
 
@@ -316,12 +332,18 @@ class PretrainedAugmentations:
             aug_list = self.aug_list
         self._aug = transforms.Compose(aug_list)
 
-        images = torch.unsqueeze(images, dim=1)  # add channel dimension (T, C, H, W) for augmentation
-        masks = torch.unsqueeze(masks, dim=1)  # add channel dimension (T, C, H, W) for augmentation
+        images = torch.unsqueeze(
+            images, dim=1
+        )  # add channel dimension (T, C, H, W) for augmentation
+        masks = torch.unsqueeze(
+            masks, dim=1
+        )  # add channel dimension (T, C, H, W) for augmentation
 
         images, masks = self._aug(images, masks)
         if torch.isnan(images).any() or torch.isnan(masks).any():
-            raise RuntimeError("NaN values found in images or masks after augmentation.")
+            raise RuntimeError(
+                "NaN values found in images or masks after augmentation."
+            )
         self.image_shape = images.shape
         # NOTE : most models do require 3 channels, but this will be done in FeatureExtractor, so the output is squeezed
         return images.squeeze(), masks.squeeze(), self.gather_records()
@@ -339,11 +361,15 @@ class PretrainedAugmentations:
     def __add__(self, other):
         """Combines two augmentation pipelines."""
         if not isinstance(other, PretrainedAugmentations):
-            raise TypeError("Can only combine with another PretrainedAugmentations instance.")
-        combined = PretrainedAugmentations(rng_seed=self._rng.seed, normalize=self.normalize, shuffle=self.shuffle)
+            raise TypeError(
+                "Can only combine with another PretrainedAugmentations instance."
+            )
+        combined = PretrainedAugmentations(
+            rng_seed=self._rng.seed, normalize=self.normalize, shuffle=self.shuffle
+        )
         combined.aug_list = self.aug_list + other.aug_list
         return combined
-    
+
     def __repr__(self):
         sig = self.get_signature()
         msg = "Augmentation pipeline"
@@ -354,9 +380,13 @@ class PretrainedAugmentations:
 
     def preprocess(self, images, masks, normalize_func=None):
         if not len(images.shape) == 3:
-            raise ValueError(f"Images must be tensor of shape (T, H, W), got {len(images.shape)}D tensor.")
+            raise ValueError(
+                f"Images must be tensor of shape (T, H, W), got {len(images.shape)}D tensor."
+            )
         if not len(masks.shape) == 3:
-            raise ValueError(f"Masks must be tensor of shape (T, H, W), got {len(masks.shape)}D tensor.")
+            raise ValueError(
+                f"Masks must be tensor of shape (T, H, W), got {len(masks.shape)}D tensor."
+            )
 
         if not isinstance(images, torch.Tensor):
             try:
@@ -383,10 +413,11 @@ class PretrainedAugmentations:
             self.aug_record.update(aug.applied_record)
         self.aug_record["image_shape"] = self.image_shape
         return self.aug_record
-    
+
 
 class PretrainedMovementAugmentations(PretrainedAugmentations):
     """Augmentation pipeline for movement embeddings."""
+
     def __init__(self, rng_seed=None, normalize=True, shuffle=True):
         super().__init__(rng_seed=rng_seed, normalize=normalize, shuffle=shuffle)
         self.aug_list = [
@@ -394,10 +425,11 @@ class PretrainedMovementAugmentations(PretrainedAugmentations):
             Rot90Augment(p=0.5, rng_seed=rng_seed),
             RandomScale(rng_seed=rng_seed),
         ]
-        
+
 
 class PretrainedIntensityAugmentations(PretrainedAugmentations):
     """Augmentation pipeline for intensity embeddings."""
+
     def __init__(self, rng_seed=None, normalize=True, shuffle=True):
         super().__init__(rng_seed=rng_seed, normalize=normalize, shuffle=shuffle)
         self.aug_list = [
@@ -407,10 +439,11 @@ class PretrainedIntensityAugmentations(PretrainedAugmentations):
             AddGaussianNoise(mean=0.0, std=0.02, rng_seed=rng_seed),
             # RandomScale(rng_seed=rng_seed),
         ]
-        
+
 
 class IdentityAugmentations(PretrainedAugmentations):
     """Identity augmentation pipeline for debugging."""
+
     def __init__(self, rng_seed=None, normalize=True, shuffle=True):
         super().__init__(rng_seed=rng_seed, normalize=normalize, shuffle=shuffle)
         self.aug_list = [

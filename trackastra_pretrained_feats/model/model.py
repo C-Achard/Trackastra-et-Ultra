@@ -1,7 +1,4 @@
-from pathlib import Path
-from collections import OrderedDict
 import logging
-import yaml
 from typing import Literal
 
 import torch
@@ -12,10 +9,10 @@ from trackastra.model.model_parts import (
     FeedForward,
     PositionalEncoding,
 )
-from trackastra.utils import blockwise_causal_norm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
 
 class TrackingTransformerwPretrainedFeats(TrackingTransformer):
     def __init__(
@@ -60,7 +57,7 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
             causal_norm=causal_norm,
             attn_dist_mode=attn_dist_mode,
         )
-        
+
         self.config = dict(
             coord_dim=coord_dim,
             feat_dim=feat_dim,
@@ -82,7 +79,7 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
             disable_xy_coords=disable_xy_coords,
             disable_all_coords=disable_all_coords,
         )
-        
+
         if pretrained_feat_dim > 0:
             self.reduced_pretrained_feat_dim = reduced_pretrained_feat_dim
         else:
@@ -92,54 +89,50 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
 
         self._disable_xy_coords = disable_xy_coords
         self._disable_all_coords = disable_all_coords
-        
+
         if self._disable_all_coords:
             coords_proj_dims = 0
         elif self._disable_xy_coords:
             coords_proj_dims = pos_embed_per_dim
         else:
             coords_proj_dims = (1 + coord_dim) * pos_embed_per_dim
-        
+
         feats_proj_dims = feat_dim * feat_embed_per_dim
-        
+
         self.proj = nn.Linear(
             coords_proj_dims + feats_proj_dims + self.reduced_pretrained_feat_dim,
-            d_model
+            d_model,
         )
         self.norm = nn.LayerNorm(d_model)
 
-        self.encoder = nn.ModuleList(
-            [
-                EncoderLayer(
-                    coord_dim,
-                    d_model,
-                    nhead,
-                    dropout,
-                    window=window,
-                    cutoff_spatial=spatial_pos_cutoff,
-                    positional_bias=attn_positional_bias,
-                    positional_bias_n_spatial=attn_positional_bias_n_spatial,
-                    attn_dist_mode=attn_dist_mode,
-                )
-                for _ in range(num_encoder_layers)
-            ]
-        )
-        self.decoder = nn.ModuleList(
-            [
-                DecoderLayer(
-                    coord_dim,
-                    d_model,
-                    nhead,
-                    dropout,
-                    window=window,
-                    cutoff_spatial=spatial_pos_cutoff,
-                    positional_bias=attn_positional_bias,
-                    positional_bias_n_spatial=attn_positional_bias_n_spatial,
-                    attn_dist_mode=attn_dist_mode,
-                )
-                for _ in range(num_decoder_layers)
-            ]
-        )
+        self.encoder = nn.ModuleList([
+            EncoderLayer(
+                coord_dim,
+                d_model,
+                nhead,
+                dropout,
+                window=window,
+                cutoff_spatial=spatial_pos_cutoff,
+                positional_bias=attn_positional_bias,
+                positional_bias_n_spatial=attn_positional_bias_n_spatial,
+                attn_dist_mode=attn_dist_mode,
+            )
+            for _ in range(num_encoder_layers)
+        ])
+        self.decoder = nn.ModuleList([
+            DecoderLayer(
+                coord_dim,
+                d_model,
+                nhead,
+                dropout,
+                window=window,
+                cutoff_spatial=spatial_pos_cutoff,
+                positional_bias=attn_positional_bias,
+                positional_bias_n_spatial=attn_positional_bias_n_spatial,
+                attn_dist_mode=attn_dist_mode,
+            )
+            for _ in range(num_decoder_layers)
+        ])
 
         self.head_x = FeedForward(d_model)
         self.head_y = FeedForward(d_model)
@@ -152,11 +145,11 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
             )
         else:
             self.feat_embed = nn.Identity()
-        
+
         if pretrained_feat_dim > 0:
             self.ptfeat_proj = nn.Sequential(
                 nn.Linear(pretrained_feat_dim, self.reduced_pretrained_feat_dim),
-            ) 
+            )
             self.ptfeat_norm = nn.LayerNorm(self.reduced_pretrained_feat_dim)
         else:
             self.ptfeat_proj = nn.Identity()
@@ -164,7 +157,7 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
 
         if self._disable_all_coords:
             self.pos_embed = nn.Identity()
-            
+
         elif self._disable_xy_coords:
             self.pos_embed = PositionalEncoding(
                 cutoffs=(window,),
@@ -178,7 +171,9 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
 
         # self.pos_embed = NoPositionalEncoding(d=pos_embed_per_dim * (1 + coord_dim))
 
-    def forward(self, coords, features=None, pretrained_features=None, padding_mask=None):
+    def forward(
+        self, coords, features=None, pretrained_features=None, padding_mask=None
+    ):
         assert coords.ndim == 3 and coords.shape[-1] in (3, 4)
         _B, _N, _D = coords.shape
         device = coords.device.type
@@ -201,40 +196,56 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
             pos = self.pos_embed(coords_feat)
         else:
             pos = None
-            
+
         if self._return_norms:
             self.norms = {}
             if not self._disable_all_coords:
                 self.norms["pos_embed"] = pos.norm(dim=-1).detach().cpu().mean().item()
-                self.norms["coords"] = coords_feat.norm(dim=-1).detach().cpu().mean().item()
-        
+                self.norms["coords"] = (
+                    coords_feat.norm(dim=-1).detach().cpu().mean().item()
+                )
+
         with torch.amp.autocast(enabled=False, device_type=device):
             # Determine if we have any features to use
             has_features = features is not None and features.numel() > 0
-            has_pretrained = pretrained_features is not None and pretrained_features.numel() > 0 and self.config["pretrained_feat_dim"] > 0
-            
+            has_pretrained = (
+                pretrained_features is not None
+                and pretrained_features.numel() > 0
+                and self.config["pretrained_feat_dim"] > 0
+            )
+
             if self._return_norms:
                 if has_features:
-                    self.norms["features"] = features.norm(dim=-1).detach().cpu().mean().item()
+                    self.norms["features"] = (
+                        features.norm(dim=-1).detach().cpu().mean().item()
+                    )
                 if has_pretrained:
-                    self.norms["pretrained_features"] = pretrained_features.norm(dim=-1).detach().cpu().mean().item()
+                    self.norms["pretrained_features"] = (
+                        pretrained_features.norm(dim=-1).detach().cpu().mean().item()
+                    )
 
             if not has_features and not has_pretrained:
                 if self._disable_all_coords:
-                    raise ValueError("features is None and all coords are disabled. Please enable at least one of the two.")
+                    raise ValueError(
+                        "features is None and all coords are disabled. Please enable at least one of the two."
+                    )
                 features_out = pos
             else:
                 # Start with features if present, else None
                 features_out = self.feat_embed(features) if has_features else None
                 if self._return_norms and has_features:
-                    self.norms["features_out"] = features_out.norm(dim=-1).detach().cpu().mean().item()
+                    self.norms["features_out"] = (
+                        features_out.norm(dim=-1).detach().cpu().mean().item()
+                    )
 
                 # Add pretrained features if configured
                 if self.config["pretrained_feat_dim"] > 0 and has_pretrained:
                     pt_features = self.ptfeat_proj(pretrained_features)
                     pt_features = self.ptfeat_norm(pt_features)
                     if self._return_norms:
-                        self.norms["pt_features_out"] = pt_features.norm(dim=-1).detach().cpu().mean().item()
+                        self.norms["pt_features_out"] = (
+                            pt_features.norm(dim=-1).detach().cpu().mean().item()
+                        )
                     if features_out is not None:
                         features_out = torch.cat((features_out, pt_features), dim=-1)
                     else:
@@ -249,10 +260,16 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
 
             features = self.proj(features_out)
             if self._return_norms:
-                self.norms["features_cat"] = features_out.norm(dim=-1).detach().cpu().mean().item()
-                self.norms["features_proj"] = features.norm(dim=-1).detach().cpu().mean().item()
+                self.norms["features_cat"] = (
+                    features_out.norm(dim=-1).detach().cpu().mean().item()
+                )
+                self.norms["features_proj"] = (
+                    features.norm(dim=-1).detach().cpu().mean().item()
+                )
         # Clamp input when returning to mixed precision
-        features = features.clamp(torch.finfo(torch.float16).min, torch.finfo(torch.float16).max)
+        features = features.clamp(
+            torch.finfo(torch.float16).min, torch.finfo(torch.float16).max
+        )
         features = self.norm(features)
 
         x = features
@@ -272,9 +289,8 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
 
         # outer product is the association matrix (logits)
         A = torch.einsum("bnd,bmd->bnm", x, y)  # /math.sqrt(_D)
-        
+
         if torch.any(torch.isnan(A)):
             logger.error("NaN in A")
 
         return A
-

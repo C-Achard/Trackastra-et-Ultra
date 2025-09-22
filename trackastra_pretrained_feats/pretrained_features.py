@@ -2291,97 +2291,97 @@ FeatureExtractor._available_backbones = AVAILABLE_PRETRAINED_BACKBONES
 
 # Embeddings post-processing
 
-import pickle
+# import pickle
 
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 
 
-class EmbeddingsPCACompression:
-    def __init__(
-        self,
-        original_model_name: str,
-        n_components: int = 15,
-        save_path: str | Path | None = None,
-    ):
-        self.original_model_name = original_model_name
-        self.n_components = n_components
-        self.save_path = save_path / "pca_model.pkl" if save_path is not None else None
-        self.pca = PCA(n_components=n_components)
-        self.max_frames = 1500
-        self.random_state = 42
-        self.pca.random_state = self.random_state
-        self.generator = np.random.default_rng(self.random_state)
+# class EmbeddingsPCACompression:
+#     def __init__(
+#         self,
+#         original_model_name: str,
+#         n_components: int = 15,
+#         save_path: str | Path | None = None,
+#     ):
+#         self.original_model_name = original_model_name
+#         self.n_components = n_components
+#         self.save_path = save_path / "pca_model.pkl" if save_path is not None else None
+#         self.pca = PCA(n_components=n_components)
+#         self.max_frames = 1500
+#         self.random_state = 42
+#         self.pca.random_state = self.random_state
+#         self.generator = np.random.default_rng(self.random_state)
 
-    @classmethod
-    def from_pretrained_cfg(cls, cfg: PretrainedFeatureExtractorConfig):
-        return cls(
-            original_model_name=cfg.model_name.replace("/", "-"),
-            n_components=cfg.pca_components,
-            save_path=cfg.pca_preprocessor_path,
-        )
+#     @classmethod
+#     def from_pretrained_cfg(cls, cfg: PretrainedFeatureExtractorConfig):
+#         return cls(
+#             original_model_name=cfg.model_name.replace("/", "-"),
+#             n_components=cfg.pca_components,
+#             save_path=cfg.pca_preprocessor_path,
+#         )
 
-    def fit(self, X: np.ndarray):
-        """Fits the PCA model to the embeddings."""
-        self.pca.fit(X)
+#     def fit(self, X: np.ndarray):
+#         """Fits the PCA model to the embeddings."""
+#         self.pca.fit(X)
 
-        if self.save_path is not None:
-            if not self.save_path.parents[0].exists():
-                self.save_path.parents[0].mkdir(parents=True, exist_ok=True)
-            with open(self.save_path, "wb") as f:
-                pickle.dump(self.pca, f)
+#         if self.save_path is not None:
+#             if not self.save_path.parents[0].exists():
+#                 self.save_path.parents[0].mkdir(parents=True, exist_ok=True)
+#             with open(self.save_path, "wb") as f:
+#                 pickle.dump(self.pca, f)
 
-    def transform(self, X: np.ndarray) -> np.ndarray:
-        """Transforms the embeddings using the fitted PCA model."""
-        return self.pca.transform(X)
+#     def transform(self, X: np.ndarray) -> np.ndarray:
+#         """Transforms the embeddings using the fitted PCA model."""
+#         return self.pca.transform(X)
 
-    def load_from_file(self, path: str | Path):
-        """Loads the PCA model from a file."""
-        if isinstance(path, str):
-            path = Path(path)
-        path = path / "pca_model.pkl" if path.suffix != ".pkl" else path
-        with open(path, "rb") as f:
-            self.pca = pickle.load(f)
-        logger.info(f"Loaded PCA model from {path}.")
+#     def load_from_file(self, path: str | Path):
+#         """Loads the PCA model from a file."""
+#         if isinstance(path, str):
+#             path = Path(path)
+#         path = path / "pca_model.pkl" if path.suffix != ".pkl" else path
+#         with open(path, "rb") as f:
+#             self.pca = pickle.load(f)
+#         logger.info(f"Loaded PCA model from {path}.")
 
-    def fit_on_embeddings(self, embeddings_source_folders: list[str | Path]):
-        """Fits the PCA model to the embeddings loaded from a file."""
-        embeddings = []
-        N_samples = 0
+#     def fit_on_embeddings(self, embeddings_source_folders: list[str | Path]):
+#         """Fits the PCA model to the embeddings loaded from a file."""
+#         embeddings = []
+#         N_samples = 0
 
-        embeddings_paths = []
-        for folder in embeddings_source_folders:
-            for file in Path(folder).rglob("*.npy"):
-                if self.original_model_name in file.name:
-                    embeddings_paths.append(file)
+#         embeddings_paths = []
+#         for folder in embeddings_source_folders:
+#             for file in Path(folder).rglob("*.npy"):
+#                 if self.original_model_name in file.name:
+#                     embeddings_paths.append(file)
 
-        if len(embeddings_paths) == 0:
-            return
+#         if len(embeddings_paths) == 0:
+#             return
 
-        embeddings_paths = self.generator.permutation(embeddings_paths)
-        logger.info(f"Fitting PCA model on {len(embeddings_paths)} embeddings files.")
-        logger.info("Files :")
-        for p in embeddings_paths:
-            logger.info(f" - {p}")
-        logger.info("*" * 50)
+#         embeddings_paths = self.generator.permutation(embeddings_paths)
+#         logger.info(f"Fitting PCA model on {len(embeddings_paths)} embeddings files.")
+#         logger.info("Files :")
+#         for p in embeddings_paths:
+#             logger.info(f" - {p}")
+#         logger.info("*" * 50)
 
-        for path in embeddings_paths:
-            if isinstance(path, str):
-                path = Path(path)
-            if not path.exists():
-                raise FileNotFoundError(f"File {path} does not exist.")
-            emb = np.load(path)
-            N_samples += emb.shape[0]
-            if N_samples > self.max_frames:
-                logger.info(
-                    f"Amount of loaded frames exceeds {self.max_frames} limit for PCA computation."
-                )
-                break
-            else:
-                embeddings.append(emb)
+#         for path in embeddings_paths:
+#             if isinstance(path, str):
+#                 path = Path(path)
+#             if not path.exists():
+#                 raise FileNotFoundError(f"File {path} does not exist.")
+#             emb = np.load(path)
+#             N_samples += emb.shape[0]
+#             if N_samples > self.max_frames:
+#                 logger.info(
+#                     f"Amount of loaded frames exceeds {self.max_frames} limit for PCA computation."
+#                 )
+#                 break
+#             else:
+#                 embeddings.append(emb)
 
-        embeddings = np.concatenate(embeddings, axis=0)
-        embeddings = embeddings.reshape(-1, embeddings.shape[-1])
-        self.fit(embeddings)
-        logger.info(
-            f"Fitted PCA model with {self.n_components} components on {N_samples} frames."
-        )
+#         embeddings = np.concatenate(embeddings, axis=0)
+#         embeddings = embeddings.reshape(-1, embeddings.shape[-1])
+#         self.fit(embeddings)
+#         logger.info(
+#             f"Fitted PCA model with {self.n_components} components on {N_samples} frames."
+#         )

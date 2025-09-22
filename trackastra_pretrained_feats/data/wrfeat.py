@@ -6,6 +6,7 @@ import pandas as pd
 from skimage.measure import regionprops_table
 
 from trackastra.data.wrfeat import WRFeatures, _border_dist_fast
+
 if TYPE_CHECKING:
     from ..pretrained_features import FeatureExtractor
 
@@ -29,6 +30,7 @@ _PROPERTIES = {
     ),
 }
 DEFAULT_PROPERTIES = "regionprops2"
+
 
 class WRPretrainedFeatures(WRFeatures):
     """WindowedRegion with features from pre-trained models."""
@@ -108,7 +110,7 @@ class WRPretrainedFeatures(WRFeatures):
             features=feats_dict,
             additional_properties=additional_properties,
         )
-    
+
     @staticmethod
     def get_regionprops_features(properties, mask, img, t_start=0):
         """Extracts regionprops features from a mask and image."""

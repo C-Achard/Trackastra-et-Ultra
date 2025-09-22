@@ -1,0 +1,5 @@
+- [ ] WRFeat
+  - [ ] Update get_features for inference with pretrained models
+- [ ] predict API
+  - [ ] Add pretrained_features mode (in main repo)
+  - [x] Update model_API (in main repo)

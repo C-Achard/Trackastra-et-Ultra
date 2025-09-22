@@ -87,7 +87,7 @@ class WRPretrainedFeatures(WRFeatures):
         )
         # else:
         # _, features = feature_extractor.extract_embedding(mask, timepoints, labels, coords, embs=embeddings)
-        features = features.detach().cpu().numpy()
+        features = features.detach().cpu()  # .numpy()
         feats_dict = OrderedDict(pretrained_feats=features)
         # Add additional features similarly to WRFeatures if any
         if additional_properties is not None:

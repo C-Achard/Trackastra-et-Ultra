@@ -241,7 +241,7 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
                 # Add pretrained features if configured
                 if self.config["pretrained_feat_dim"] > 0 and has_pretrained:
                     pt_features = self.ptfeat_proj(pretrained_features)
-                    pt_features = self.ptfeat_norm(pt_features)
+                    pt_features = self.ptfeat_norm(pt_features).squeeze()
                     if self._return_norms:
                         self.norms["pt_features_out"] = (
                             pt_features.norm(dim=-1).detach().cpu().mean().item()

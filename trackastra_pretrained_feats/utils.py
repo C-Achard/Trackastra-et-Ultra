@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def percentile_norm(b):
     for i, im in enumerate(b):
         p1, p99 = np.percentile(im, (1, 99.8))

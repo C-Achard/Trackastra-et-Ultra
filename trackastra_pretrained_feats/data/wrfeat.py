@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -7,8 +6,7 @@ from skimage.measure import regionprops_table
 
 from trackastra.data.wrfeat import WRFeatures, _border_dist_fast
 
-if TYPE_CHECKING:
-    from ..pretrained_features import FeatureExtractor
+from ..pretrained_features import FeatureExtractor
 
 _PROPERTIES = {
     "regionprops": (

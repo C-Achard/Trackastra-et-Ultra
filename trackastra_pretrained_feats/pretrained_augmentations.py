@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torchvision import tv_tensors
 from torchvision.transforms import v2 as transforms
 
-from trackastra.utils.utils import percentile_norm
+from .utils import percentile_norm
 
 
 class BaseAugmentation(ABC):

@@ -11,6 +11,7 @@ from .pretrained_features import (
 # from .pretrained_augmentations import *
 from .model.model import TrackingTransformerwPretrainedFeats
 from .data.wrfeat import WRPretrainedFeatures
+from .utils import percentile_norm
 
 __all__ = [
     "FeatureExtractor",
@@ -18,4 +19,5 @@ __all__ = [
     # "CoTrackerFeatures",
     "TrackingTransformerwPretrainedFeats",
     "WRPretrainedFeatures",
+    "percentile_norm",
 ]

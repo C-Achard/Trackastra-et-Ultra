@@ -30,9 +30,10 @@ Can be installed as an optional module of Trackastra:
 pip install trackastra[pretrained_feats]
 ```
 
-For standalone installation:
+For standalone installation (Trackastra still required):
 
 ```bash
+pip install trackastra
 pip install git+https://github.com/C-Achard/Trackastra-et-Ultra.git
 ```
 

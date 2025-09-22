@@ -28,7 +28,7 @@ from transformers import (
 )
 
 from trackastra.data import wrfeat
-from trackastra.utils.utils import percentile_norm
+from .utils import percentile_norm
 
 if TYPE_CHECKING:
     from trackastra.data.pretrained_augmentations import PretrainedAugmentations

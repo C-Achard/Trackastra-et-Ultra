@@ -247,7 +247,21 @@ class TrackingTransformerwPretrainedFeats(TrackingTransformer):
                             pt_features.norm(dim=-1).detach().cpu().mean().item()
                         )
                     if features_out is not None:
-                        features_out = torch.cat((features_out, pt_features), dim=-1)
+                        try:
+                            if (
+                                features_out.shape[0] == 1
+                                and len(pt_features.shape) == 2
+                            ):
+                                pt_features = pt_features.unsqueeze(0)
+                            features_out = torch.cat(
+                                (features_out, pt_features), dim=-1
+                            )
+                        except RuntimeError as e:
+                            logger.error(
+                                f"Pretrained features shape: {pt_features.shape}"
+                            )
+                            logger.error(f"Features shape: {features_out.shape}")
+                            raise e
                     else:
                         features_out = pt_features
 

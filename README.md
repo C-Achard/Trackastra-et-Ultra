@@ -11,23 +11,23 @@
 </div>
 
 
-# *Trackastra Et Ultra* - Tracking by Association with Transformers and Pretrained Features
+# *Trackastra Et Ultra* - Tracking by Association with Transformers and Foundation Models Features
 
 
-*Trackastra et Ultra* (`trackastra_pretrained_feats`) is a Python library that provides a small API to extract pretrained features for use in [Trackastra](https://github.com/weigertlab/trackastra), meant for enhancing cell tracking performance using features from foundation models such as [SAM2.1](https://github.com/facebookresearch/sam2) or [CoTracker3](https://github.com/facebookresearch/co-tracker).
+*Trackastra et Ultra* (`trackastra_pretrained_feats`) is a Python library that provides a small API to extract pre-trained features for use in [Trackastra](https://github.com/weigertlab/trackastra), meant for enhancing cell tracking performance using features from foundation models such as [SAM2.1](https://github.com/facebookresearch/sam2) or [CoTracker3](https://github.com/facebookresearch/co-tracker).
 
 <p align="center">
 <img src="res/model.png" alt="Updated model with pre-trained features" style="width:85%;"/>
 </p>
 
-Must be installed in order to use the SAM2.1-powered (or other foundation model) pre-trained model(s) in Trackastra.
+Must be installed in order to use the SAM2.1-powered (or other arbitrary model) pre-trained model(s) in Trackastra.
 
 ## Installation
 
 Can be installed as an optional module of Trackastra:
 
 ```bash
-pip install trackastra[pretrained_feats]
+pip install trackastra[etultra]
 ```
 
 For standalone installation (Trackastra still required):

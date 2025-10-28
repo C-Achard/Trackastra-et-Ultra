@@ -181,4 +181,5 @@ cython_debug/
 .cursorindexingignore
 
 .vscode
-example/tracked_ctc
+*.tif
+*.txt

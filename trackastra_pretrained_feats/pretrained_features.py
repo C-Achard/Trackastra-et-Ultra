@@ -13,7 +13,6 @@ import torch
 import torch.nn.functional as F
 import zarr
 from numcodecs import Blosc
-from sam2.sam2_image_predictor import SAM2ImagePredictor
 from skimage.measure import regionprops
 from tqdm import tqdm
 from transformers import (
@@ -27,11 +26,20 @@ from transformers import (
     SamProcessor,
 )
 
+# TODO move the imports in the classes to avoid import errors if the package is not installed
+# TODO feature extraction on MPS
 from trackastra.data import wrfeat
 from .utils import percentile_norm
 
 if TYPE_CHECKING:
     from trackastra.data.pretrained_augmentations import PretrainedAugmentations
+
+try:
+    from sam2.sam2_image_predictor import SAM2ImagePredictor
+
+    SAM2_AVAILABLE = True
+except ImportError:
+    SAM2_AVAILABLE = False
 
 try:
     from micro_sam.util import get_sam_model as get_microsam_model
@@ -1692,6 +1700,10 @@ class SAM2Features(FeatureExtractor):
         mode: PretrainedFeatsExtractionMode = "nearest_patch",
         **kwargs,
     ):
+        if not SAM2_AVAILABLE:
+            raise ImportError(
+                "SAM2Features requires the SAM 2 package. Please install it via 'pip install git+https://github.com/facebookresearch/sam2.git'"
+            )
         super().__init__(image_size, save_path, batch_size, device, mode)
         self.input_size = 1024
         self.final_grid_size = 64  # 64x64 grid

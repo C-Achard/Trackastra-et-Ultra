@@ -37,6 +37,41 @@ pip install trackastra
 pip install git+https://github.com/C-Achard/Trackastra-et-Ultra.git
 ```
 
+## Example usage
+
+Below is a minimal example of how to use Trackastra with pre-trained features from SAM 2.1 to track bacteria.
+
+You may also run the [example Jupyter notebook](https://github.com/C-Achard/Trackastra-et-Ultra/blob/main/example/basic_use.ipynb) for a quick demo.
+
+The model used here is `SAM21_general_2d`, which is also available in the [napari-trackastra plugin](https://github.com/weigertlab/napari-trackastra/).
+
+```python
+from pathlib import Path
+import torch
+
+from trackastra.model import Trackastra
+from trackastra.tracking import graph_to_ctc, graph_to_napari_tracks, write_to_geff
+from trackastra.data import example_data_bacteria
+
+imgs, masks = example_data_bacteria()
+model = Trackastra.from_pretrained("SAM21_general_2d")
+
+track_graph, masks_tracked = model.track(imgs, masks, mode="greedy")
+ctc_tracks, ctc_masks = graph_to_ctc(
+    track_graph,
+    masks_tracked,
+    # outdir="tracked_ctc",
+)
+napari_tracks, napari_tracks_graph, _ = graph_to_napari_tracks(track_graph)
+import napari
+v = napari.Viewer()
+v.add_image(imgs)
+v.add_labels(ctc_masks)
+v.add_tracks(data=napari_tracks, graph=napari_tracks_graph)
+```
+
+See the official [Trackastra documentation](https://github.com/weigertlab/trackastra) for more details on how to use the Trackastra models and API.
+
 ## Reference
 
 If you use this code, please cite the following publications:

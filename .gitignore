@@ -183,3 +183,4 @@ cython_debug/
 .vscode
 *.tif
 *.txt
+*.npy

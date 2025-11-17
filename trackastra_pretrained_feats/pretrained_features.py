@@ -247,7 +247,7 @@ class FeatureExtractor(ABC):
         self,
         image_size: tuple[int, int],
         save_path: str | Path,
-        batch_size: int = 4,
+        batch_size: int = 1,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         mode: PretrainedFeatsExtractionMode = "nearest_patch",
         normalize_embeddings: bool = True,
@@ -371,6 +371,7 @@ class FeatureExtractor(ABC):
         mode="nearest_patch",
         additional_features=None,
         model_folder=None,
+        batch_size=1,
     ):
         cls._available_backbones = AVAILABLE_PRETRAINED_BACKBONES
         if model_name not in cls._available_backbones:
@@ -388,6 +389,7 @@ class FeatureExtractor(ABC):
             device=device,
             mode=mode,
             model_folder=model_folder,
+            batch_size=batch_size,
         )
         model.additional_features = additional_features
         return model

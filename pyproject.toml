@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "trackastra_pretrained_feats"
-version = "0.0.1"
+version = "0.0.2"
 description = "Pretrained feature extraction API for Trackastra"
 authors = ["Cyril Achard, Benjamin Gallusser, Martin Weigert"]
 

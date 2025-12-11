@@ -247,7 +247,7 @@ class FeatureExtractor(ABC):
         self,
         image_size: tuple[int, int],
         save_path: str | Path,
-        batch_size: int = 4,
+        batch_size: int = 1,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         mode: PretrainedFeatsExtractionMode = "nearest_patch",
         normalize_embeddings: bool = True,
@@ -371,6 +371,7 @@ class FeatureExtractor(ABC):
         mode="nearest_patch",
         additional_features=None,
         model_folder=None,
+        batch_size=1,
     ):
         cls._available_backbones = AVAILABLE_PRETRAINED_BACKBONES
         if model_name not in cls._available_backbones:
@@ -388,6 +389,7 @@ class FeatureExtractor(ABC):
             device=device,
             mode=mode,
             model_folder=model_folder,
+            batch_size=batch_size,
         )
         model.additional_features = additional_features
         return model
@@ -528,6 +530,10 @@ class FeatureExtractor(ABC):
                 desc="Computing embeddings",
                 leave=False,
             ):
+                if self.device == "mps":
+                    torch.mps.empty_cache()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 embeddings = self._run_model(batches, **kwargs)
                 if torch.any(embeddings.isnan()):
                     raise RuntimeError("NaN values found in features.")
@@ -725,11 +731,13 @@ class FeatureExtractor(ABC):
         end_patch_y = (maxr - 1) // cell_height
         start_patch_x = minc // cell_width
         end_patch_x = (maxc - 1) // cell_width
-        patches = np.array([
-            (i, j)
-            for i in range(start_patch_y, end_patch_y + 1)
-            for j in range(start_patch_x, end_patch_x + 1)
-        ])
+        patches = np.array(
+            [
+                (i, j)
+                for i in range(start_patch_y, end_patch_y + 1)
+                for j in range(start_patch_x, end_patch_x + 1)
+            ]
+        )
         return patches
 
     def _find_patches_for_masks(self, image_mask: np.ndarray) -> dict:
@@ -1881,7 +1889,7 @@ class CoTrackerFeatures(FeatureExtractor):
                 len(images),
                 grid_size[0] * grid_size[1],
                 self.hidden_state_size,
-                device=self.device,
+                device="cpu",
             )
             if missing:
                 for ts, batches in tqdm(
@@ -1898,7 +1906,7 @@ class CoTrackerFeatures(FeatureExtractor):
                     if torch.any(embeddings.isnan()):
                         raise RuntimeError("NaN values found in features.")
                     # logger.debug(f"Embeddings shape: {embeddings.shape}")
-                    all_embeddings[ts] = embeddings.to(torch.float32)
+                    all_embeddings[ts] = embeddings.to(torch.float32).cpu()
                     assert embeddings.shape[-1] == self.hidden_state_size
                 self.embeddings = all_embeddings
                 self._save_features(all_embeddings)
